@@ -23,8 +23,39 @@
  * ```
  * */
 export function calcTileType(index, boardSize) {
-  // TODO: ваш код будет тут
-  return 'center';
+  // parts of desired string
+  let xPosition = "";
+  let yPosition = "";
+  
+  // figure out horizontal part
+  if (index % boardSize === 0) {
+    xPosition = "left";
+  }
+  else if (index % boardSize === boardSize - 1) {
+    xPosition = "right";
+  }
+
+  // figure out vertical part
+  if (Math.floor(index / boardSize) === 0) {
+    yPosition = "top";
+  }
+  else if (Math.floor(index / boardSize) === boardSize - 1) {
+    yPosition = "bottom";
+  }
+
+  // construct desired string of non-empty parts. if both parts are empty - return "center"
+  if (xPosition === "" && yPosition === "") {
+    return "center"
+  }
+  else if (yPosition === "") {
+    return xPosition
+  }
+  else if (xPosition === "") {
+    return yPosition
+  }
+  else {
+    return `${yPosition}-${xPosition}`
+  }
 }
 
 export function calcHealthLevel(health) {

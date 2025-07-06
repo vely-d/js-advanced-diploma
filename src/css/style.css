@@ -41,7 +41,9 @@ body {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  /* grid-template-columns: repeat(8, 1fr); */
+  grid-template-columns: repeat(attr(data-size type(<number>), 8), 1fr);
+  /* grid-template-columns: repeat(attr(data-size type(number)), 1fr); */
   grid-column-gap: 2px;
   grid-row-gap: 2px;
 }

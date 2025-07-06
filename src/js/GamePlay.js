@@ -1,4 +1,4 @@
-import { calcHealthLevel, calcTileType } from './utils';
+import { calcHealthLevel, calcTileType } from './utils.js';
 
 export default class GamePlay {
   constructor() {
@@ -36,7 +36,8 @@ export default class GamePlay {
         <button data-id="action-load" class="btn">Load Game</button>
       </div>
       <div class="board-container">
-        <div data-id="board" class="board"></div>
+        <!-- <div data-id="board" class="board"></div> -->
+        <div data-id="board" class="board" data-size="${this.boardSize}"></div>
       </div>
     `;
 
