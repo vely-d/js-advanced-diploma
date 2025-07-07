@@ -70,12 +70,13 @@ export default class GamePlay {
    * @param positions array of PositionedCharacter objects
    */
   redrawPositions(positions) {
-    for (const cell of this.cells) {
-      cell.innerHTML = '';
-    }
+    // for (const cell of this.cells) {
+    //   cell.innerHTML = '';
+    // }
 
     for (const position of positions) {
       const cellEl = this.boardEl.children[position.position];
+      cellEl.innerHTML = '';
       const charEl = document.createElement('div');
       charEl.classList.add('character', position.character.type);
 

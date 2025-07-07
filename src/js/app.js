@@ -12,5 +12,6 @@ const stateService = new GameStateService(localStorage);
 
 const gameCtrl = new GameController(gamePlay, stateService);
 gameCtrl.init();
+gameCtrl.layoutCharacters();
 
 // don't write your code here
