@@ -1,106 +1,133 @@
 import themes from "./themes";
-import { generateTeam } from "./generators";
+import { generateTeam } from "./generators"
+import { indexToCoordinates, /*coordinatesToIndex,*/ getAngle } from "./mathHelpers"
 import Bowman from "./characters/Bowman"
 import Swordsman from "./characters/Swordsman"
 import Magician from "./characters/Magician"
 import Vampire from "./characters/Vampire"
 import Undead from "./characters/Undead"
 import Daemon from "./characters/Daemon"
-import PositionedCharacter from "./PositionedCharacter";
+// import PositionedCharacter from "./PositionedCharacter";
 import GamePlay from "./GamePlay";
 
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.selectedCellIndex = -1;
-    
+    this.selectedCharacterIndex = -1;
+
   }
 
   init() {
     this.gamePlay.drawUi(themes.prairie);
     this.gamePlay.getHint();
     this.gamePlay.addCellEnterListener(index => { this.onCellEnter(index); });
-    // this.gamePlay.addCellLeaveListener(index => { this.onCellLeave(index); });
-    this.gamePlay.addCellLeaveListener(() => { this.onCellLeave(); });
+    this.gamePlay.addCellLeaveListener(index => { this.onCellLeave(index); });
+    // this.gamePlay.addCellLeaveListener(() => { this.onCellLeave(); });
     this.gamePlay.addCellClickListener((index) => { this.onCellClick(index); });
-    // console.log(evalise(this.gamePlay));
-    
+
     // TODO: load saved stated from stateService
   }
 
   layoutCharacters() {
-    this.playersTeam = generateTeam([Bowman, Swordsman, Magician], 2, 3);
-    let playerPositions = [ 
+    this.playersTeam = generateTeam([Bowman, Swordsman, Magician], 2, 3).characters;
+    let playerPositions = [
       ...Array.from({ length: this.gamePlay.boardSize }, (_, i) => i * this.gamePlay.boardSize),
-      ...Array.from({ length: this.gamePlay.boardSize }, (_, i) => i * this.gamePlay.boardSize + 1) 
+      ...Array.from({ length: this.gamePlay.boardSize }, (_, i) => i * this.gamePlay.boardSize + 1)
     ];
     let getRandomPlayerPosition = (() => {
       let positions = [...playerPositions];
-      return function() { 
+      return function () {
         let randomIndex = Math.floor(Math.random() * positions.length);
         return positions.splice(randomIndex, 1)[0]
       }
     })();
-    this.positionedPlayerChars = this.playersTeam.characters.map(character => new PositionedCharacter(character, getRandomPlayerPosition()));
-    
-    let enemyPositions = playerPositions.map(position => position + this.gamePlay.boardSize - 2) 
+    this.positionedPlayerChars = new Map();
+    for (let pc of this.playersTeam) {
+      this.positionedPlayerChars.set(getRandomPlayerPosition(), pc);
+    }
+
+    this.enemiesTeam = generateTeam([Vampire, Undead, Daemon], 2, 3).characters;
+    let enemyPositions = playerPositions.map(position => position + this.gamePlay.boardSize - 2);
+    // let enemyPositions = playerPositions.map(position => position + 2); // helps checking out enemy hovering
     let getRandomEnemyPosition = (() => {
       let positions = [...enemyPositions];
-      return function() { 
+      return function () {
         let randomIndex = Math.floor(Math.random() * positions.length);
         return positions.splice(randomIndex, 1)[0]
       }
     })();
-    this.enemiesTeam = generateTeam([Vampire, Undead, Daemon], 2, 3);
-    this.positionedEnemyChars = this.enemiesTeam.characters.map(character => new PositionedCharacter(character, getRandomEnemyPosition()));
+    this.positionedEnemyChars = new Map();
+    for(let ec of this.enemiesTeam) {
+      this.positionedEnemyChars.set(getRandomEnemyPosition(), ec);
+    }
 
     this.gamePlay.redrawPositions(this.positionedPlayerChars);
     this.gamePlay.redrawPositions(this.positionedEnemyChars);
   }
 
-  
   onCellEnter(index) {
-    for(let posChar of [...this.positionedPlayerChars, ...this.positionedEnemyChars]) {
-      if(index == posChar.position) {
-        this.gamePlay.hintEl.textContent = `🎖${posChar.character.level} ⚔${posChar.character.attack} 🛡${posChar.character.defence} ❤${posChar.character.health}`;
-        // this.gamePlay.hintEl.textContent = `\u{1F396}${posChar.character.level} \u{2694}${posChar.character.attack} \u{1F6E1}${posChar.character.defence} \u{2764}\u{FE0F}${posChar.character.health}`;
+    if (this.selectedCharacterIndex > -1 && this.selectedCharacterIndex != index) {
+      if (this.positionedPlayerChars.get(index)) {
+        this.gamePlay.setCursor("pointer");
+        return;
+      }
+      let selectedCharacter = this.positionedPlayerChars.get(this.selectedCharacterIndex);
+      let selectedCoords = indexToCoordinates(this.selectedCharacterIndex, this.gamePlay.boardSize);
+      let hoveredCoords = indexToCoordinates(index, this.gamePlay.boardSize);
+      let hoveredVector = {
+        x: hoveredCoords.x - selectedCoords.x,
+        y: hoveredCoords.y - selectedCoords.y
+      }
+
+      let enemyHovered = this.positionedEnemyChars.get(index);
+
+      // checking if player hovered the enemy and if so, is the enemy atackable
+      if (enemyHovered && getAngle(hoveredVector) % 45 == 0 && Math.abs(hoveredVector.x) <= selectedCharacter.range && Math.abs(hoveredVector.y) <= selectedCharacter.range) {
+        this.gamePlay.selectCell(index, "red");
+        this.gamePlay.setCursor("crosshair");
+      }
+      // checking if the empty cell user hovered is reachable 
+      else if (!this.positionedPlayerChars.get(index) && getAngle(hoveredVector) % 45 == 0 && Math.abs(hoveredVector.x) <= selectedCharacter.stamina && Math.abs(hoveredVector.y) <= selectedCharacter.stamina) {
+        this.gamePlay.selectCell(index, "green");
+        this.gamePlay.setCursor("pointer")
+      } else {
+        this.gamePlay.setCursor("not-allowed");
+      }
+    } else {
+      let howeverCharacter = this.positionedPlayerChars.get(index) || this.positionedEnemyChars.get(index);
+      if (howeverCharacter) {
+        this.gamePlay.hintEl.textContent = `🎖${howeverCharacter.level} ⚔${howeverCharacter.attack} 🛡${howeverCharacter.defence} ❤${howeverCharacter.health}`;
         this.gamePlay.moveHint(index);
         this.gamePlay.showHint();
         return;
       }
+      this.gamePlay.hideHint();
     }
-    this.gamePlay.hideHint();
   }
 
-  onCellLeave() {
+  onCellLeave(index) {
     this.gamePlay.hideHint();
+    if(index != this.selectedCharacterIndex) {
+      this.gamePlay.deselectCell(index);
+    }
+    this.gamePlay.setCursor("default");
   }
-  
-  
-  // onCellEnter(index) {
-  //   let tooltipText = '';
-  //   for(let posChar of [...this.positionedPlayerChars, ...this.positionedEnemyChars]) {
-  //     if(index == posChar.position) {
-  //       tooltipText = `🎖${posChar.character.level} ⚔${posChar.character.attack} 🛡${posChar.character.defence} ❤${posChar.character.health}`;
-  //       break;
-  //     }
-  //   }
-  //   this.gamePlay.showCellTooltip(tooltipText, index);
-  // }
-
-  // onCellLeave(index) {
-  //   this.gamePlay.hideCellTooltip(index);
-  // }
 
   onCellClick(index) {
-    const cellCharacter = this.positionedPlayerChars.filter(e => e.position == index)[0];
-    if(cellCharacter) {
-      if(this.selectedCellIndex >= 0) {
-        this.gamePlay.deselectCell(this.selectedCellIndex);
+    const cellCharacter = this.positionedPlayerChars.get(index);
+    if (cellCharacter) {
+      if (this.selectedCharacterIndex == index) {
+        this.gamePlay.deselectCell(index);
+        this.selectedCharacterIndex = -1;
+      } else if (this.selectedCharacterIndex >= 0) {
+        this.gamePlay.deselectCell(this.selectedCharacterIndex);
+        this.gamePlay.selectCell(index);
+        this.selectedCharacterIndex = index;
+      } else {
+        this.gamePlay.selectCell(index);
+        this.selectedCharacterIndex = index;
       }
-      this.gamePlay.selectCell(index);
-      this.selectedCellIndex = index;
     }
     else {
       GamePlay.showError("Эту клетку нельзя выделить");

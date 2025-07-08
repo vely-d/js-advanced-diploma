@@ -40,7 +40,7 @@ export default class GamePlay {
         <!-- <div data-id="board" class="board"></div> -->
         <div data-id="board" class="board" data-size="${this.boardSize}"></div>
       </div>
-      <span id="hint" class="char-stats-hint transparent"></span>
+      <span id="hint" class="char-stats-hint char-stats-hint__hidden"></span>
     `;
 
     this.newGameEl = this.container.querySelector('[data-id=action-restart]');
@@ -76,18 +76,23 @@ export default class GamePlay {
     //   cell.innerHTML = '';
     // }
 
-    for (const position of positions) {
-      const cellEl = this.boardEl.children[position.position];
+    // for (const position of positions) {
+    for (const [position, character] of positions) {
+      // const cellEl = this.boardEl.children[position.position];
+      const cellEl = this.boardEl.children[position];
       cellEl.innerHTML = '';
       const charEl = document.createElement('div');
-      charEl.classList.add('character', position.character.type);
+      // charEl.classList.add('character', position.character.type);
+      charEl.classList.add('character', character.type);
 
       const healthEl = document.createElement('div');
       healthEl.classList.add('health-level');
 
       const healthIndicatorEl = document.createElement('div');
-      healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(position.character.health)}`);
-      healthIndicatorEl.style.width = `${position.character.health}%`;
+      // healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(position.character.health)}`);
+      healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(character.health)}`);
+      // healthIndicatorEl.style.width = `${position.character.health}%`;
+      healthIndicatorEl.style.width = `${character.health}%`;
       healthEl.appendChild(healthIndicatorEl);
 
       charEl.appendChild(healthEl);
@@ -219,7 +224,7 @@ export default class GamePlay {
    */
   hideHint() {
     // this.hintEl.classList.add('hidden');
-    this.hintEl.classList.add('transparent');
+    this.hintEl.classList.add('char-stats-hint__hidden');
   }
 
   /**
@@ -227,7 +232,7 @@ export default class GamePlay {
    */
   showHint() {
     // this.hintEl.classList.remove('hidden');
-    this.hintEl.classList.remove('transparent');
+    this.hintEl.classList.remove('char-stats-hint__hidden');
   }
   
   moveHint(index) {

@@ -39,6 +39,11 @@ body {
   transition: opacity 0.3s;
 }
 
+.char-stats-hint__hidden {
+  opacity: 0;
+  z-index: -3;
+}
+
 .controls {
   text-align: center;
   margin: 50px 0;

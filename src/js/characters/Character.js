@@ -15,6 +15,8 @@
 export default class Character {
   constructor(level, type = 'generic') {
     this.level = level;
+    this.stamina = 0;
+    this.range = 0;
     this.attack = 0;
     this.defence = 0;
     this.health = 50;
