@@ -11,9 +11,10 @@ import Daemon from "./characters/Daemon"
 import GamePlay from "./GamePlay";
 
 export default class GameController {
-  constructor(gamePlay, stateService) {
+  constructor(gamePlay, stateService, gameState) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
+    this.gameState = gameState;
     this.selectedCharacterIndex = -1;
 
   }
@@ -88,7 +89,7 @@ export default class GameController {
         this.gamePlay.setCursor("crosshair");
       }
       // checking if the empty cell user hovered is reachable 
-      else if (!this.positionedPlayerChars.get(index) && getAngle(hoveredVector) % 45 == 0 && Math.abs(hoveredVector.x) <= selectedCharacter.stamina && Math.abs(hoveredVector.y) <= selectedCharacter.stamina) {
+      else if (!this.positionedPlayerChars.get(index) && !this.positionedEnemyChars.get(index) && getAngle(hoveredVector) % 45 == 0 && Math.abs(hoveredVector.x) <= selectedCharacter.stamina && Math.abs(hoveredVector.y) <= selectedCharacter.stamina) {
         this.gamePlay.selectCell(index, "green");
         this.gamePlay.setCursor("pointer")
       } else {
@@ -115,8 +116,8 @@ export default class GameController {
   }
 
   onCellClick(index) {
-    const cellCharacter = this.positionedPlayerChars.get(index);
-    if (cellCharacter) {
+    const clickedPlayerCharacter = this.positionedPlayerChars.get(index);
+    if (clickedPlayerCharacter) {
       if (this.selectedCharacterIndex == index) {
         this.gamePlay.deselectCell(index);
         this.selectedCharacterIndex = -1;
@@ -128,9 +129,55 @@ export default class GameController {
         this.gamePlay.selectCell(index);
         this.selectedCharacterIndex = index;
       }
+      return;
+    } else if(this.selectedCharacterIndex >= 0 && !this.positionedPlayerChars.get(index) && !this.positionedEnemyChars.get(index)) {
+      let selectedCharacter = this.positionedPlayerChars.get(this.selectedCharacterIndex);
+      let selectedCoords = indexToCoordinates(this.selectedCharacterIndex, this.gamePlay.boardSize);
+      let clickedCoords = indexToCoordinates(index, this.gamePlay.boardSize);
+      let clickedVector = {
+        x: clickedCoords.x - selectedCoords.x,
+        y: clickedCoords.y - selectedCoords.y
+      }
+      if(getAngle(clickedVector) % 45 == 0 && Math.abs(clickedVector.x) <= selectedCharacter.stamina && Math.abs(clickedVector.y) <= selectedCharacter.stamina) {
+        let movingCharater = this.positionedPlayerChars.get(this.selectedCharacterIndex);
+        this.positionedPlayerChars.delete(this.selectedCharacterIndex);
+        this.gamePlay.clearCell(this.selectedCharacterIndex);
+        this.gamePlay.deselectCell(this.selectedCharacterIndex);
+        this.selectedCharacterIndex = -1;
+        this.positionedPlayerChars.set(index, movingCharater);
+        this.gamePlay.drawPositionedCharacter(index, movingCharater);
+      } else {
+        GamePlay.showError("Сейчас выбранный персонаж не может туда добраться");
+      }
+    } else if(this.selectedCharacterIndex >= 0 && this.positionedEnemyChars.get(index)) {
+      let selectedCharacter = this.positionedPlayerChars.get(this.selectedCharacterIndex);
+      let selectedCoords = indexToCoordinates(this.selectedCharacterIndex, this.gamePlay.boardSize);
+      let clickedCoords = indexToCoordinates(index, this.gamePlay.boardSize);
+      let clickedVector = {
+        x: clickedCoords.x - selectedCoords.x,
+        y: clickedCoords.y - selectedCoords.y
+      }
+      if(getAngle(clickedVector) % 45 == 0 && Math.abs(clickedVector.x) <= selectedCharacter.range && Math.abs(clickedVector.y) <= selectedCharacter.range) {
+        let offensiveCharacter = this.positionedPlayerChars.get(this.selectedCharacterIndex);
+        let targetEnemy = this.positionedEnemyChars.get(index);
+        let damage = Math.max(offensiveCharacter.attack - targetEnemy.defence, offensiveCharacter.attack * 0.1)
+        this.gamePlay.hideHint();
+        this.gamePlay.showDamage(index, damage);
+        targetEnemy.health = damage < targetEnemy.health ? targetEnemy.health - damage : 0;
+        if(targetEnemy.health > 0) {
+          this.gamePlay.drawPositionedCharacter(index, targetEnemy);
+        } else {
+          this.gamePlay.clearCell(index);
+          this.positionedEnemyChars.delete(index);
+        }
+        this.gamePlay.deselectCell(this.selectedCharacterIndex);
+        this.selectedCharacterIndex = -1;
+      } else {
+        GamePlay.showError("Выбранный персонаж сейчас не может атаковать этого врага");
+      }
     }
     else {
-      GamePlay.showError("Эту клетку нельзя выделить");
+      GamePlay.showError("Выберите персонажа");
     }
   }
 }

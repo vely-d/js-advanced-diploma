@@ -260,6 +260,10 @@ body {
   animation: 500ms fade ease-out;
 }
 
+/* .damage_animated {
+
+} */
+
 .transparent {
   opacity: 0;
 }

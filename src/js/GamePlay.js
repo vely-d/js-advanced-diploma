@@ -6,6 +6,7 @@ export default class GamePlay {
     this.container = null;
     this.boardEl = null;
     this.hintEl = null;
+    this.damageEl = null;
     this.cells = [];
     this.cellClickListeners = [];
     this.cellEnterListeners = [];
@@ -40,7 +41,8 @@ export default class GamePlay {
         <!-- <div data-id="board" class="board"></div> -->
         <div data-id="board" class="board" data-size="${this.boardSize}"></div>
       </div>
-      <span id="hint" class="char-stats-hint char-stats-hint__hidden"></span>
+      <span id="hint" class="char-stats-hint char-stats-hint__hidden hidden"></span>
+      <!-- <span id="damage-badge" class="damage"></span> -->
     `;
 
     this.newGameEl = this.container.querySelector('[data-id=action-restart]');
@@ -98,6 +100,32 @@ export default class GamePlay {
       charEl.appendChild(healthEl);
       cellEl.appendChild(charEl);
     }
+  }
+
+  clearCell(index) {
+    const cellEl = this.boardEl.children[index];
+    cellEl.innerHTML = '';
+  }
+
+  drawPositionedCharacter(position, character) {
+    const cellEl = this.boardEl.children[position];
+    cellEl.innerHTML = '';
+    const charEl = document.createElement('div');
+    // charEl.classList.add('character', position.character.type);
+    charEl.classList.add('character', character.type);
+
+    const healthEl = document.createElement('div');
+    healthEl.classList.add('health-level');
+
+    const healthIndicatorEl = document.createElement('div');
+    // healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(position.character.health)}`);
+    healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(character.health)}`);
+    // healthIndicatorEl.style.width = `${position.character.health}%`;
+    healthIndicatorEl.style.width = `${character.health}%`;
+    healthEl.appendChild(healthIndicatorEl);
+
+    charEl.appendChild(healthEl);
+    cellEl.appendChild(charEl);
   }
 
   /**
@@ -204,6 +232,7 @@ export default class GamePlay {
     cell.classList.remove(...Array.from(cell.classList)
       .filter(o => o.startsWith('selected')));
   }
+
   // -------------------------
   // My implementation of hint
   // -------------------------
@@ -246,6 +275,19 @@ export default class GamePlay {
     this.hintEl.style.setProperty('left', `${hintX}px`);
     this.hintEl.style.setProperty('top', `${hintY}px`);
   }
+
+  // getDamageBadge() {
+  //   let damageBadge = document.getElementById('damage-badge');
+  //   if (!(damageBadge instanceof HTMLElement)) {
+  //     throw new Error('Can not find damage badge element');
+  //   }
+  //   this.damageEl = damageBadge;
+  // }
+
+  // showDamage(index, damage) {
+  //   this.damageEl.textContent = `-${damage}ОЗ`;
+  //   this.damageEl.classList.add('damage_animated');
+  // }
 
   showCellTooltip(message, index) {
     this.cells[index].title = message;
