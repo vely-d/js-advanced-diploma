@@ -8,6 +8,32 @@ import Undead from "./characters/Undead"
 import Daemon from "./characters/Daemon"
 import PositionedCharacter from "./PositionedCharacter";
 
+// function objectToString(o) {
+//     const entries = Object.entries(o).map(([key, value]) => {
+//         if (typeof value === 'function') {
+//             // Handle methods
+//             return `${key}() { ${value.toString().slice(11, -1)} }`;
+//         } else if (typeof value === 'object' && value !== null) {
+//             // Handle nested objects
+//             return `${key}: ${objectToString(value)}`;
+//         } else {
+//             // Handle primitive values
+//             return `${key}: ${JSON.stringify(value)}`;
+//         }
+//     });
+//     return `{ ${entries.join(', ')} }`;
+// }
+
+// function evalise(obj) {
+//     // Helper function to convert the object to a string
+
+//     // Convert the object to a string representation
+//     const objString = objectToString(obj);
+    
+//     // Return the final eval-able string
+//     return `a = ${objString}`;
+// }
+
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -19,7 +45,12 @@ export default class GameController {
 
   init() {
     this.gamePlay.drawUi(themes.prairie);
-    // TODO: add event listeners to gamePlay events
+    this.gamePlay.getHint();
+    this.gamePlay.addCellEnterListener(index => { this.onCellEnter(index); });
+    // this.gamePlay.addCellLeaveListener(index => { this.onCellLeave(index); });
+    this.gamePlay.addCellLeaveListener(() => { this.onCellLeave(); });
+    // console.log(evalise(this.gamePlay));
+    
     // TODO: load saved stated from stateService
   }
 
@@ -53,15 +84,41 @@ export default class GameController {
     this.gamePlay.redrawPositions(this.positionedEnemyChars);
   }
 
+  
+  onCellEnter(index) {
+    for(let posChar of [...this.positionedPlayerChars, ...this.positionedEnemyChars]) {
+      if(index == posChar.position) {
+        this.gamePlay.hintEl.textContent = `🎖${posChar.character.level} ⚔${posChar.character.attack} 🛡${posChar.character.defence} ❤${posChar.character.health}`;
+        // this.gamePlay.hintEl.textContent = `\u{1F396}${posChar.character.level} \u{2694}${posChar.character.attack} \u{1F6E1}${posChar.character.defence} \u{2764}\u{FE0F}${posChar.character.health}`;
+        this.gamePlay.moveHint(index);
+        this.gamePlay.showHint();
+        return;
+      }
+    }
+    this.gamePlay.hideHint();
+  }
+
+  onCellLeave() {
+    this.gamePlay.hideHint();
+  }
+  
+  
+  // onCellEnter(index) {
+  //   let tooltipText = '';
+  //   for(let posChar of [...this.positionedPlayerChars, ...this.positionedEnemyChars]) {
+  //     if(index == posChar.position) {
+  //       tooltipText = `🎖${posChar.character.level} ⚔${posChar.character.attack} 🛡${posChar.character.defence} ❤${posChar.character.health}`;
+  //       break;
+  //     }
+  //   }
+  //   this.gamePlay.showCellTooltip(tooltipText, index);
+  // }
+
+  // onCellLeave(index) {
+  //   this.gamePlay.hideCellTooltip(index);
+  // }
+
   onCellClick(index) {
     // TODO: react to click
-  }
-
-  onCellEnter(index) {
-    // TODO: react to mouse enter
-  }
-
-  onCellLeave(index) {
-    // TODO: react to mouse leave
   }
 }

@@ -5,6 +5,7 @@ export default class GamePlay {
     this.boardSize = 8;
     this.container = null;
     this.boardEl = null;
+    this.hintEl = null;
     this.cells = [];
     this.cellClickListeners = [];
     this.cellEnterListeners = [];
@@ -39,6 +40,7 @@ export default class GamePlay {
         <!-- <div data-id="board" class="board"></div> -->
         <div data-id="board" class="board" data-size="${this.boardSize}"></div>
       </div>
+      <span id="hint" class="char-stats-hint transparent"></span>
     `;
 
     this.newGameEl = this.container.querySelector('[data-id=action-restart]');
@@ -196,6 +198,48 @@ export default class GamePlay {
     const cell = this.cells[index];
     cell.classList.remove(...Array.from(cell.classList)
       .filter(o => o.startsWith('selected')));
+  }
+  // -------------------------
+  // My implementation of hint
+  // -------------------------
+
+  /**
+   * Set's up  the hint element. should be invoked just once
+   */
+  getHint() {
+    let hint = document.getElementById('hint');
+    if (!(hint instanceof HTMLElement)) {
+      throw new Error('Can not find hint element');
+    }
+    this.hintEl = hint;
+  }
+
+  /**
+   * Makes hint element invisible
+   */
+  hideHint() {
+    // this.hintEl.classList.add('hidden');
+    this.hintEl.classList.add('transparent');
+  }
+
+  /**
+   * Shows hint element
+   */
+  showHint() {
+    // this.hintEl.classList.remove('hidden');
+    this.hintEl.classList.remove('transparent');
+  }
+  
+  moveHint(index) {
+    // let { top, left, right, bottom } = this.boardEl.children[index].getBoundingClientRect();
+    let cellRect = this.boardEl.children[index].getBoundingClientRect();
+    let hintRect = this.hintEl.getBoundingClientRect();
+
+    let hintX = cellRect.left + cellRect.width / 2 - hintRect.width / 2;
+    let hintY = cellRect.top - hintRect.height - 10;
+
+    this.hintEl.style.setProperty('left', `${hintX}px`);
+    this.hintEl.style.setProperty('top', `${hintY}px`);
   }
 
   showCellTooltip(message, index) {

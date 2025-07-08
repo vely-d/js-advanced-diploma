@@ -27,6 +27,18 @@ body {
   border: none;
 }
 
+.char-stats-hint {
+  position: absolute;
+  color: white;
+  border: solid 2px white;
+  background-color: black;
+  padding: 0.6em 1.2em;
+  font-family: monospace;
+
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
 .controls {
   text-align: center;
   margin: 50px 0;
@@ -40,9 +52,10 @@ body {
 }
 
 .board {
+  --cols: attr(data-size type(<number>), 8);
   display: grid;
   /* grid-template-columns: repeat(8, 1fr); */
-  grid-template-columns: repeat(attr(data-size type(<number>), 8), 1fr);
+  grid-template-columns: repeat(var(--cols), 1fr);
   /* grid-template-columns: repeat(attr(data-size type(number)), 1fr); */
   grid-column-gap: 2px;
   grid-row-gap: 2px;
@@ -172,7 +185,7 @@ body {
   width: var(--cell-size);
   height: var(--cell-size);
   position: absolute;
-  z-index: 99;
+  /* z-index: 99; */ /* apparently character is being displayed just fine without it */
 }
 
 .character.generic {
@@ -240,6 +253,14 @@ body {
   color: #f00;
   font-weight: bold;
   animation: 500ms fade ease-out;
+}
+
+.transparent {
+  opacity: 0;
+}
+
+.hidden {
+  display: none;
 }
 
 @keyframes fade {
