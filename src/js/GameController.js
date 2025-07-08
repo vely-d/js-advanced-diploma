@@ -7,39 +7,13 @@ import Vampire from "./characters/Vampire"
 import Undead from "./characters/Undead"
 import Daemon from "./characters/Daemon"
 import PositionedCharacter from "./PositionedCharacter";
-
-// function objectToString(o) {
-//     const entries = Object.entries(o).map(([key, value]) => {
-//         if (typeof value === 'function') {
-//             // Handle methods
-//             return `${key}() { ${value.toString().slice(11, -1)} }`;
-//         } else if (typeof value === 'object' && value !== null) {
-//             // Handle nested objects
-//             return `${key}: ${objectToString(value)}`;
-//         } else {
-//             // Handle primitive values
-//             return `${key}: ${JSON.stringify(value)}`;
-//         }
-//     });
-//     return `{ ${entries.join(', ')} }`;
-// }
-
-// function evalise(obj) {
-//     // Helper function to convert the object to a string
-
-//     // Convert the object to a string representation
-//     const objString = objectToString(obj);
-    
-//     // Return the final eval-able string
-//     return `a = ${objString}`;
-// }
-
+import GamePlay from "./GamePlay";
 
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    
+    this.selectedCellIndex = -1;
     
   }
 
@@ -49,6 +23,7 @@ export default class GameController {
     this.gamePlay.addCellEnterListener(index => { this.onCellEnter(index); });
     // this.gamePlay.addCellLeaveListener(index => { this.onCellLeave(index); });
     this.gamePlay.addCellLeaveListener(() => { this.onCellLeave(); });
+    this.gamePlay.addCellClickListener((index) => { this.onCellClick(index); });
     // console.log(evalise(this.gamePlay));
     
     // TODO: load saved stated from stateService
@@ -119,6 +94,16 @@ export default class GameController {
   // }
 
   onCellClick(index) {
-    // TODO: react to click
+    const cellCharacter = this.positionedPlayerChars.filter(e => e.position == index)[0];
+    if(cellCharacter) {
+      if(this.selectedCellIndex >= 0) {
+        this.gamePlay.deselectCell(this.selectedCellIndex);
+      }
+      this.gamePlay.selectCell(index);
+      this.selectedCellIndex = index;
+    }
+    else {
+      GamePlay.showError("Эту клетку нельзя выделить");
+    }
   }
 }
