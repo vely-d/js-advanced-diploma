@@ -5,7 +5,6 @@ export default class GamePlay {
     this.boardSize = 8;
     this.container = null;
     this.boardEl = null;
-    this.hintEl = null;
     this.damageEl = null;
     this.cells = [];
     this.cellClickListeners = [];
@@ -14,6 +13,9 @@ export default class GamePlay {
     this.newGameListeners = [];
     this.saveGameListeners = [];
     this.loadGameListeners = [];
+    
+    this.hintEl = null;
+    this.damageAnimationDuration = 500;
   }
 
   bindToDOM(container) {
@@ -66,6 +68,8 @@ export default class GamePlay {
     }
 
     this.cells = Array.from(this.boardEl.children);
+
+    document.documentElement.style.setProperty('--fade-duration', `${this.damageAnimationDuration}ms`)
   }
 
   /**
@@ -296,8 +300,8 @@ export default class GamePlay {
   hideCellTooltip(index) {
     this.cells[index].title = '';
   }
-  
-  showDamage(index, damage) {
+
+  showDamage(index, damage, callback) {
     return new Promise((resolve) => {
       const cell = this.cells[index];
       const damageEl = document.createElement('span');
@@ -305,9 +309,11 @@ export default class GamePlay {
       damageEl.classList.add('damage');
       cell.appendChild(damageEl);
 
-      damageEl.addEventListener('animationend', () => {
+      damageEl.addEventListener('animationend', async () => {
         cell.removeChild(damageEl);
+        await (new Promise((innerResolve) => setTimeout(() => { innerResolve(); }, this.damageAnimationDuration)));
         resolve();
+        callback();
       });
     });
   }

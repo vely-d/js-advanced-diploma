@@ -16,7 +16,7 @@ export default class GameController {
     this.stateService = stateService;
     this.gameState = gameState;
     this.selectedCharacterIndex = -1;
-
+    this.controlsActive = true;
   }
 
   init() {
@@ -68,6 +68,10 @@ export default class GameController {
   }
 
   onCellEnter(index) {
+    if(!this.controlsActive) {
+      this.gamePlay.setCursor('progress');
+      return;
+    }
     if (this.selectedCharacterIndex > -1 && this.selectedCharacterIndex != index) {
       if (this.positionedPlayerChars.get(index)) {
         this.gamePlay.setCursor("pointer");
@@ -108,6 +112,10 @@ export default class GameController {
   }
 
   onCellLeave(index) {
+    // if(!this.controlsActive) {
+    //   this.gamePlay.setCursor('progress');
+    //   return;
+    // }
     this.gamePlay.hideHint();
     if(index != this.selectedCharacterIndex) {
       this.gamePlay.deselectCell(index);
@@ -116,6 +124,9 @@ export default class GameController {
   }
 
   onCellClick(index) {
+    if(!this.controlsActive) {
+      return
+    }
     const clickedPlayerCharacter = this.positionedPlayerChars.get(index);
     if (clickedPlayerCharacter) {
       if (this.selectedCharacterIndex == index) {
@@ -171,6 +182,9 @@ export default class GameController {
           this.positionedEnemyChars.delete(index);
         }
         this.gamePlay.deselectCell(this.selectedCharacterIndex);
+        // (async () => { await this.gamePlay.showDamage(index, damage) })()
+        this.controlsActive = false;
+        this.gamePlay.showDamage(index, damage, () => { this.controlsActive = true; this.gamePlay.setCursor("default"); })
         this.selectedCharacterIndex = -1;
       } else {
         GamePlay.showError("Выбранный персонаж сейчас не может атаковать этого врага");

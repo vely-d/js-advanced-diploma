@@ -1,5 +1,6 @@
 :root {
   --cell-size: 64px;
+  --fade-duration: 500ms;
 }
 
 html, body {
@@ -257,7 +258,7 @@ body {
   z-index: 999;
   color: #f00;
   font-weight: bold;
-  animation: 500ms fade ease-out;
+  animation: var(--fade-duration) fade ease-out;
 }
 
 /* .damage_animated {
