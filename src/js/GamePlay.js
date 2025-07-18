@@ -43,7 +43,7 @@ export default class GamePlay {
         <!-- <div data-id="board" class="board"></div> -->
         <div data-id="board" class="board" data-size="${this.boardSize}"></div>
       </div>
-      <span id="hint" class="char-stats-hint char-stats-hint__hidden hidden"></span>
+      <span id="hint" class="char-stats-hint char-stats-hint__hidden"></span>
       <!-- <span id="damage-badge" class="damage"></span> -->
     `;
 
