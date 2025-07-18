@@ -1,23 +1,14 @@
 export default class GameState {
-  static from(object) {
-    // TODO: create object
-    
-    // let state = {
-    //   playersCount: object.playersCount,
-    //   activePlayerIndex: object.activePlayerIndex,
-    //   next() {
-    //     return this.activePlayerIndex = (this.activePlayerIndex + 1) % this.playersCount;
-    //   }
-    // }
-
-    // let state = { ...object }
-    
+  static from(GameControllerObject) {
     let state = {
-      theme: object.theme,
-      boardSize: object.boardSize,
-      positionedPlayerChars: object.positionedPlayerChars,
-      positionedEnemyChars: object.positionedEnemyChars,
-      points: object.points
+      selectedCharacterIndex: -1,
+      gameOver: GameControllerObject.gameOver,
+      level: GameControllerObject.level,
+      boardSize: GameControllerObject.boardSize,
+      positionedPlayerChars: Array.from(GameControllerObject.positionedPlayerChars),
+      positionedEnemyChars: Array.from(GameControllerObject.positionedEnemyChars),
+      score: GameControllerObject.score,
+      highscore: GameControllerObject.highscore
     }
 
     return state;

@@ -13,20 +13,25 @@
  * vampire
  */
 export default class Character {
-  constructor(level, type = 'generic', stamina, range, attack, defence, health=50) {
-    this.level = 1;
+  constructor(level, stamina, range, attack, defence, health=50, type = 'generic', raiseToLevel=false) {
+    if (new.target === Character) {
+      throw new Error('Cannot instantiate an abstract class: Character');
+    }
+
     this.stamina = stamina;
     this.range = range;
     this.attack = attack;
     this.defence = defence;
     this.health = health;
     this.type = type;
-    if (new.target === Character) {
-      throw new Error('Cannot instantiate an abstract class: Character');
-    }
+    this.level = 1;
 
-    for(let i = 1; i < level; i++) {
-      this.levelUp();
+    if(raiseToLevel) {
+      for(let i = 1; i < level; i++) {
+        this.levelUp();
+      }
+    } else {
+      this.level = level
     }
   }
 
@@ -36,4 +41,9 @@ export default class Character {
     this.defence = Math.max(this.defence, Math.floor(this.defence * (80 + this.health) / 100));
     this.health += this.health < 20 ? 80 : 100 - this.health;
   }
+
+  // static from(object) {
+  //   // let char = new Character(0, 'generic', 1, 1, 10, 10, 50)
+  //   return new Character({ ...object })
+  // }
 }

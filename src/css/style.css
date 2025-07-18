@@ -28,6 +28,10 @@ body {
   border: none;
 }
 
+.btn:active {
+  background-color: rgb(183, 183, 183);
+}
+
 .char-stats-hint {
   /* position: absolute; */
   position: fixed;

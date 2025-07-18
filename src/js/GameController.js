@@ -8,41 +8,53 @@ import Vampire from "./characters/Vampire"
 import Undead from "./characters/Undead"
 import Daemon from "./characters/Daemon"
 import GamePlay from "./GamePlay"
+import GameState from "./GameState";
 
 export default class GameController {
-  constructor(gamePlay, stateService, gameState) {
+  constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.gameState = gameState;
     this.gameOver = false;
 
     this.controlsActive = true;
     this.selectedCharacterIndex = -1;
     this.positionedPlayerChars = new Map();
     this.positionedEnemyChars = new Map();
-    this.level = 1
+    this.level = 1;
+    this.score = 0;
+    this.highscore = 0;
   }
 
   init() {
     this.gamePlay.setupUi();
-    this.gamePlay.addNewGameListener(() => { this.startGame(); });
-
-    // TODO: load saved stated from stateService
+    this.gamePlay.addNewGameListener(() => { this.newGame(); });
+    this.gamePlay.addSaveGameListener(() => { this.saveState(); });
+    this.gamePlay.addLoadGameListener(() => { this.loadState(); });
+    this.loadState();
   }
 
-  startGame() {
-    this.gamePlay.setupBoard(themes.prairie);
+  newGame() {
+    let playersTeam = generateTeam([Bowman, Swordsman, Magician], 1, 3).characters;
+    let enemiesTeam = generateTeam([Vampire, Undead, Daemon], 1, 3).characters;
+    this.layoutCharacters(playersTeam, enemiesTeam);
+
+    this.level = 1;
+
+    this.startSession();
+  }
+
+  startSession() {
+    let theme = Object.values(themes)[this.level - 1];
+    this.gamePlay.setupBoard(theme);
     this.gamePlay.clearAllCells();
 
+    this.gamePlay.clearMouseControls();
     this.gamePlay.addCellEnterListener(index => { this.onCellEnter(index); });
     this.gamePlay.addCellLeaveListener(index => { this.onCellLeave(index); });
     this.gamePlay.addCellClickListener(index => { this.onCellClick(index); });
 
-    let playersTeam = generateTeam([Bowman, Swordsman, Magician], 1, 3).characters;
-    let enemiesTeam = generateTeam([Vampire, Undead, Daemon], 1, 3).characters;
-    // let playersTeam = generateTeam([Swordsman], 100, 4).characters;
-    // let enemiesTeam = generateTeam([Undead], 1, 1).characters;
-    this.layoutCharacters(playersTeam, enemiesTeam);
+    this.gamePlay.redrawPositions(this.positionedPlayerChars);
+    this.gamePlay.redrawPositions(this.positionedEnemyChars);
   }
 
   layoutCharacters(playersTeam, enemiesTeam) {
@@ -62,9 +74,58 @@ export default class GameController {
     for (let ec of enemiesTeam) {
       this.positionedEnemyChars.set(getRandomEnemyPosition(), ec);
     }
+  }
 
-    this.gamePlay.redrawPositions(this.positionedPlayerChars);
-    this.gamePlay.redrawPositions(this.positionedEnemyChars);
+  saveState() {
+    if(this.gameOver) {
+      alert('can not save - the game session is already finished');
+      return;
+    }
+    this.stateService.save(GameState.from(this));
+  }
+
+  loadState() {
+    let state = this.stateService.load();
+    if(state === null) {
+      let callstack = (new Error()).stack.split('\n    at ')
+      if(!callstack[2].includes('init')) {
+        alert('no savestate found. try saving the game first');
+      } else {
+        console.log('no savestate found. empty field was loaded')
+      }
+      return;
+    }
+
+    for (let prop in state) {
+      this[prop] = state[prop];
+    }
+
+    this.positionedPlayerChars = GameController.formatStatePositionedChars(this.positionedPlayerChars);
+    this.positionedEnemyChars = GameController.formatStatePositionedChars(this.positionedEnemyChars);
+
+    this.startSession();
+  }
+
+  static formatStatePositionedChars(positionedChars) {
+    let charClasses = {
+      bowman: Bowman,
+      swordsman: Swordsman,
+      magician: Magician,
+      undead: Undead,
+      vampire: Vampire,
+      daemon: Daemon
+    };
+
+    let formattedPositionedChars = positionedChars.map(function (pair) {
+      let position = pair[0];
+      let charData = pair[1];
+      let charClass = charClasses[charData.type];
+      let creationArgs = [charData.level, charData.stamina, charData.range, charData.attack, charData.defence, charData.health, false];
+      let character = new charClass(...creationArgs);
+      return [position, character];
+    });
+
+    return new Map(formattedPositionedChars)
   }
 
   onCellEnter(index) {
@@ -112,10 +173,6 @@ export default class GameController {
   }
 
   onCellLeave(index) {
-    // if(!this.controlsActive) {
-    //   this.gamePlay.setCursor('progress');
-    //   return;
-    // }
     this.gamePlay.hideHint();
     if (index != this.selectedCharacterIndex) {
       this.gamePlay.deselectCell(index);
@@ -157,6 +214,7 @@ export default class GameController {
         this.positionedPlayerChars.delete(this.selectedCharacterIndex);
         this.gamePlay.clearCell(this.selectedCharacterIndex);
         this.gamePlay.deselectCell(this.selectedCharacterIndex);
+        this.gamePlay.deselectCell(index);
         this.selectedCharacterIndex = -1;
         this.positionedPlayerChars.set(index, movingCharater);
         this.gamePlay.drawPositionedCharacter(index, movingCharater);
@@ -179,6 +237,7 @@ export default class GameController {
         if (targetEnemy.health > 0) {
           this.gamePlay.drawPositionedCharacter(index, targetEnemy);
         } else {
+          this.score += targetEnemy.level * 10;
           this.gamePlay.clearCell(index);
           this.positionedEnemyChars.delete(index);
         }
@@ -274,8 +333,7 @@ export default class GameController {
     switch (whoFinishes) {
       case 'bot':
         if (Array.from(this.positionedPlayerChars.keys()).length === 0) {
-          alert('welp, you lost. try again maybe');
-          this.gamePlay.clearMouseControls();
+          this.finishSession('welp, you lost. try again maybe');
         }
         this.controlsActive = true;
         this.gamePlay.setCursor("default");
@@ -286,9 +344,8 @@ export default class GameController {
           this.controlsActive = true;
           this.gamePlay.setCursor("default");
 
-          if (this.level == 4) {
-            alert('congrats, you won!');
-            this.gamePlay.clearMouseControls();
+          if (this.level == 1) {
+            this.finishSession('congrats, you won!');
             return;
           }
 
@@ -304,12 +361,26 @@ export default class GameController {
 
           this.gamePlay.clearAllCells();
           this.layoutCharacters(updatedPlayersTeam, newEnemyTeam);
-
+          this.gamePlay.redrawPositions(this.positionedPlayerChars);
+          this.gamePlay.redrawPositions(this.positionedEnemyChars);
 
           return;
         }
         this.botMakesTurn();
         break;
     }
+  }
+
+  finishSession(finalMessage) {
+    alert(finalMessage);
+    this.gamePlay.clearMouseControls();
+
+    if (this.score > this.highscore) {
+      alert(`new highscore achived! \n\n previous: ${this.highscore} \n current: ${this.score}`);
+      this.highscore = this.score;
+    }
+
+    this.score = 0;
+    this.gameOver = true;
   }
 }

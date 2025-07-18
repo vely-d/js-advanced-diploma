@@ -83,6 +83,7 @@ export default class GamePlay {
   clearAllCells() {
     for(let i = 0; i < this.boardEl.children.length; i++) {
       this.clearCell(i);
+      this.deselectCell(i);
     }
   }
 
