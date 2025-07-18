@@ -33,7 +33,7 @@ export function canAttack(attacker, attackerIndex, targetIndex, boardSize) {
 }
 
 export function Damage(attacker, target) {
-    return Math.max(attacker.attack - target.defence, attacker.attack * 0.1)
+    return Math.floor(Math.max(attacker.attack - target.defence, attacker.attack * 0.1))
 }
 
 function directionByAngle(angle) {

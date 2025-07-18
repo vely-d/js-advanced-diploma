@@ -15,6 +15,5 @@ const initialGameState = GameState.from({ playersCount: 2, activePlayerIndex: 0 
 
 const gameCtrl = new GameController(gamePlay, stateService, initialGameState);
 gameCtrl.init();
-gameCtrl.layoutCharacters();
 
 // don't write your code here

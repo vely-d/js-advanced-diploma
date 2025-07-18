@@ -1,4 +1,5 @@
 import { calcHealthLevel, calcTileType } from './utils.js';
+import themes from './themes.js';
 
 export default class GamePlay {
   constructor() {
@@ -30,7 +31,7 @@ export default class GamePlay {
    *
    * @param theme
    */
-  drawUi(theme) {
+  setupUi() {
     this.checkBinding();
 
     this.container.innerHTML = `
@@ -57,7 +58,9 @@ export default class GamePlay {
 
     this.boardEl = this.container.querySelector('[data-id=board]');
 
-    this.boardEl.classList.add(theme);
+    // this.boardEl.classList.add(theme);
+    this.setupBoard(themes.prairie);
+
     for (let i = 0; i < this.boardSize ** 2; i += 1) {
       const cellEl = document.createElement('div');
       cellEl.classList.add('cell', 'map-tile', `map-tile-${calcTileType(i, this.boardSize)}`);
@@ -69,7 +72,18 @@ export default class GamePlay {
 
     this.cells = Array.from(this.boardEl.children);
 
-    document.documentElement.style.setProperty('--fade-duration', `${this.damageAnimationDuration}ms`)
+    document.documentElement.style.setProperty('--fade-duration', `${this.damageAnimationDuration}ms`);
+    this.getHint();
+  }
+
+  setupBoard(theme) {
+    this.boardEl.classList = `board ${theme}`;
+  }
+
+  clearAllCells() {
+    for(let i = 0; i < this.boardEl.children.length; i++) {
+      this.clearCell(i);
+    }
   }
 
   /**
@@ -184,6 +198,12 @@ export default class GamePlay {
    */
   addLoadGameListener(callback) {
     this.loadGameListeners.push(callback);
+  }
+
+  clearMouseControls() {
+    this.cellClickListeners = [];
+    this.cellEnterListeners = [];
+    this.cellLeaveListeners = [];
   }
 
   onCellEnter(event) {
